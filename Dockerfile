@@ -7,7 +7,7 @@ ENV APP_NAME=baiduyun
 ENV APP_VERSION=4.17.8
 ENV USER_ID=0
 ENV GROUP_ID=0
-ENV ENABLE_CJK_FONT=0
+ENV ENABLE_CJK_FONT=1
 ENV DISPLAY_WIDTH=1920
 ENV DISPLAY_HEIGHT=1080
 ENV DEBIAN_FRONTEND=noninteractive
@@ -34,6 +34,15 @@ RUN apt-get install -y locales && \
 
 # setup dependency
 RUN apt-get install -y --no-install-recommends ca-certificates curl libgbm-dev libasound2-dev apt-utils libx11-xcb1 && \
+    rm -rf /var/lib/apt/lists/*
+
+# Pre-install CJK font files (unpack only, skip postinst)
+# This creates /usr/share/fonts/truetype/wqy/ so the init script skips apt-get
+RUN apt-get update && \
+    cd /tmp && \
+    apt-get download fonts-wqy-zenhei && \
+    dpkg --unpack fonts-wqy-zenhei*.deb && \
+    rm -f fonts-wqy-zenhei*.deb && \
     rm -rf /var/lib/apt/lists/*
 
 # Download and install baiduyun deb
