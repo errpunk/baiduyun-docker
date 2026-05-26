@@ -54,9 +54,10 @@ RUN curl -fsSL -o /tmp/baidunetdisk_${APP_VERSION}_amd64.deb "${BAIDUYUN_URL}" &
     rm -f /tmp/baidunetdisk_${APP_VERSION}_amd64.deb && \
     apt-get update && \
     (apt-get install -f -y --no-install-recommends || \
-     (for pkg in systemd libpam-systemd:amd64 dbus dbus-user-session; do \
+     (for pkg in systemd libpam-systemd:amd64 dbus dbus-user-session fontconfig fontconfig-config; do \
         printf '#!/bin/sh\nexit 0\n' > /var/lib/dpkg/info/$pkg.postinst 2>/dev/null || true; \
       done; \
+      dpkg --configure -a --force-depends || true; \
       dpkg --configure -a --force-depends || true; \
       dpkg --configure -a || true; \
       apt-get install -f -y --no-install-recommends || true)) && \
@@ -65,9 +66,13 @@ RUN curl -fsSL -o /tmp/baidunetdisk_${APP_VERSION}_amd64.deb "${BAIDUYUN_URL}" &
 # fix statoverride to prevent container-init errors
 RUN echo -n '' > /var/lib/dpkg/statoverride
 
+# Ensure all packages are fully configured
+RUN printf '#!/bin/sh\nexit 0\n' > /var/lib/dpkg/info/dbus.postinst 2>/dev/null || true && \
+    dpkg --configure -a --force-depends || true && \
+    dpkg --configure -a || true
+
 # Health check for Synology NAS Container Manager
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
     CMD curl -fsS http://localhost:5800/ > /dev/null || exit 1
 
-COPY main-window-selection.xml /etc/openbox/main-window-selection.xml
 COPY --chmod=755 startapp.sh /startapp.sh
