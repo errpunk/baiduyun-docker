@@ -69,4 +69,5 @@ RUN echo -n '' > /var/lib/dpkg/statoverride
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
     CMD curl -fsS http://localhost:5800/ > /dev/null || exit 1
 
+COPY main-window-selection.xml /etc/openbox/main-window-selection.xml
 COPY --chmod=755 startapp.sh /startapp.sh
