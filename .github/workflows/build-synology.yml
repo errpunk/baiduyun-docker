@@ -48,6 +48,7 @@ jobs:
             docker.io/${{ secrets.DOCKER_USERNAME }}/baiduyun
           tags: |
             type=raw,value=synology
+            type=raw,value=linux-amd64
             type=raw,value=latest
             type=sha,prefix=,suffix=,format=short
 
