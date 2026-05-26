@@ -7,7 +7,7 @@ ENV APP_NAME=baiduyun
 ENV APP_VERSION=4.17.8
 ENV USER_ID=0
 ENV GROUP_ID=0
-ENV ENABLE_CJK_FONT=1
+ENV ENABLE_CJK_FONT=0
 ENV DISPLAY_WIDTH=1920
 ENV DISPLAY_HEIGHT=1080
 ENV DEBIAN_FRONTEND=noninteractive
@@ -33,7 +33,7 @@ RUN apt-get install -y locales && \
     locale-gen
 
 # setup dependency
-RUN apt-get install -y --no-install-recommends ca-certificates curl libgbm-dev libasound2-dev apt-utils && \
+RUN apt-get install -y --no-install-recommends ca-certificates curl libgbm-dev libasound2-dev apt-utils libx11-xcb1 && \
     rm -rf /var/lib/apt/lists/*
 
 # Download and install baiduyun deb
@@ -41,18 +41,20 @@ RUN apt-get install -y --no-install-recommends ca-certificates curl libgbm-dev l
 ARG BAIDUYUN_URL=https://8b7d8c-1993640123.antpcdn.com:19001/b/pkg-ant.baidu.com/issue/netdisk/LinuxGuanjia/${APP_VERSION}/baidunetdisk_${APP_VERSION}_amd64.deb
 
 RUN curl -fsSL -o /tmp/baidunetdisk_${APP_VERSION}_amd64.deb "${BAIDUYUN_URL}" && \
-    dpkg -i /tmp/baidunetdisk_${APP_VERSION}_amd64.deb || \
-    (apt-get update && \
-     { apt-get --fix-broken install -y --no-install-recommends || \
-       (printf '#!/bin/sh\nexit 0\n' > /var/lib/dpkg/info/systemd.postinst && \
-        dpkg --configure -a || true); })
-
-# workaround for error: "unknown system group 'messagebus' in statoverride file; the system group got removed"
-RUN echo -n '' > /var/lib/dpkg/statoverride
-
-# Cleanup to reduce image size
-RUN rm -f /tmp/baidunetdisk_${APP_VERSION}_amd64.deb && \
+    dpkg -i --force-depends /tmp/baidunetdisk_${APP_VERSION}_amd64.deb && \
+    rm -f /tmp/baidunetdisk_${APP_VERSION}_amd64.deb && \
+    apt-get update && \
+    (apt-get install -f -y --no-install-recommends || \
+     (for pkg in systemd libpam-systemd:amd64 dbus dbus-user-session; do \
+        printf '#!/bin/sh\nexit 0\n' > /var/lib/dpkg/info/$pkg.postinst 2>/dev/null || true; \
+      done; \
+      dpkg --configure -a --force-depends || true; \
+      dpkg --configure -a || true; \
+      apt-get install -f -y --no-install-recommends || true)) && \
     rm -rf /var/lib/apt/lists/*
+
+# fix statoverride to prevent container-init errors
+RUN echo -n '' > /var/lib/dpkg/statoverride
 
 # Health check for Synology NAS Container Manager
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
