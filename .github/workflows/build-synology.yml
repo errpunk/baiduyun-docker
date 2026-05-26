@@ -45,7 +45,7 @@ jobs:
         with:
           images: |
             ghcr.io/${{ github.repository }}
-            docker.io/${{ secrets.DOCKER_USERNAME }}/baiduyun
+            docker.io/${{ secrets.DOCKER_USERNAME }}/baiduyun-docker
           tags: |
             type=raw,value=synology
             type=raw,value=linux-amd64
@@ -69,5 +69,5 @@ jobs:
           echo "Tags:"
           echo "  ghcr.io/${{ github.repository }}:synology"
           echo "  ghcr.io/${{ github.repository }}:latest"
-          echo "  docker.io/${{ secrets.DOCKER_USERNAME }}/baiduyun:synology"
-          echo "  docker.io/${{ secrets.DOCKER_USERNAME }}/baiduyun:latest"
+          echo "  docker.io/${{ secrets.DOCKER_USERNAME }}/baiduyun-docker:synology"
+          echo "  docker.io/${{ secrets.DOCKER_USERNAME }}/baiduyun-docker:latest"
