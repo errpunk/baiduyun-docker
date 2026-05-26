@@ -33,15 +33,15 @@ RUN apt-get install -y locales && \
     locale-gen
 
 # setup dependency
-RUN apt-get install -y --no-install-recommends curl libgbm-dev libasound2-dev apt-utils && \
+RUN apt-get install -y --no-install-recommends ca-certificates curl libgbm-dev libasound2-dev apt-utils && \
     rm -rf /var/lib/apt/lists/*
 
-# Copy pre-downloaded baiduyun deb file
-COPY baidunetdisk_${APP_VERSION}_amd64.deb /tmp/baidunetdisk_${APP_VERSION}_amd64.deb
+# Download and install baiduyun deb
+# Override BAIDUYUN_URL at build time: --build-arg BAIDUYUN_URL=<custom-url>
+ARG BAIDUYUN_URL=https://8b7d8c-1993640123.antpcdn.com:19001/b/pkg-ant.baidu.com/issue/netdisk/LinuxGuanjia/${APP_VERSION}/baidunetdisk_${APP_VERSION}_amd64.deb
 
-# Install baiduyun deb. Workaround systemd postinst failing in Docker by
-# replacing its postinst script with a no-op if configuration fails.
-RUN dpkg -i /tmp/baidunetdisk_${APP_VERSION}_amd64.deb || \
+RUN curl -fsSL -o /tmp/baidunetdisk_${APP_VERSION}_amd64.deb "${BAIDUYUN_URL}" && \
+    dpkg -i /tmp/baidunetdisk_${APP_VERSION}_amd64.deb || \
     (apt-get update && \
      { apt-get --fix-broken install -y --no-install-recommends || \
        (printf '#!/bin/sh\nexit 0\n' > /var/lib/dpkg/info/systemd.postinst && \
